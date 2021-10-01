@@ -63,8 +63,8 @@ public class BacklashCompensationTest {
 
         //String command = "G0X-10.784Y-9.821";
 
-        String command = "G2 X3 Y4 I-4 J-3";
-        state.currentPoint = new Position(4,3,0);
+        //String command = "G2 X3 Y4 I-4 J-3";
+        //state.currentPoint = new Position(4,3,0);
 
         //String command = "G3 X4 Y3 I-3 J-4";
         //String command = "G3 X3 Y4 I-4 J-3";
@@ -78,6 +78,10 @@ public class BacklashCompensationTest {
         //state.currentPoint = new Position(4,5,0);
 
         //state.currentPoint = new Position(3,4,0);
+
+        String command = "G1 X3 Y2 Z5";
+        state.currentPoint = new Position(4,3,0);
+
         List<String> ret = processCommand(command, state);
         for (String t : ret) {
             System.out.println(t);
@@ -103,32 +107,75 @@ public class BacklashCompensationTest {
             return compensateArcQuadrants(noComments, state);
         }
 
-        /*if (g0123Pattern.matcher(noComments).matches()) {
-            for (String t : commandWords) {
-                char c = Character.toUpperCase(t.charAt(0));
-                if (c == 'X') {
-
-                } else if (c == 'Y') {
-
-                }
-            }
-            if (latestCommand.equals("G2")) {
-                System.out.println(commandWords);
-                compensateArcQuadrants(noComments, state);
-            }
-            //return Arrays.asList(command, dwellCommand);
-        } else if (xyzPattern.matcher(noComments).matches() && g0123Pattern.matcher(latestCommand).matches()) {
-
-        }*/
-
         return Collections.singletonList(command);
     }
 
-    private List<String> compensateLine(String command, GcodeState state) {
+    private List<String> compensateLine(String command, GcodeState state) throws GcodeParserException {
         // Note: can have X, Y, and Z directions. Need to make sure all 3 are accounted for based on received command
+        List<String> commandWords = GcodePreprocessorUtils.splitCommand(command);
 
+        // Booleans to keep track of which axes need to be updated by command
+        boolean xCommand = false;
+        boolean yCommand = false;
+        boolean zCommand = false;
+        // Line end coordinates
+        double xEnd = 0;
+        double yEnd = 0;
+        double zEnd = 0;
 
-        return Collections.singletonList(command);
+        for (String t : commandWords) {
+            char c = Character.toUpperCase(t.charAt(0));
+            if (c == 'X') {
+                xEnd = Double.parseDouble(t.substring(1));
+                xCommand = true;
+            } else if (c == 'Y') {
+                yEnd = Double.parseDouble(t.substring(1));
+                yCommand = true;
+            } else if (c == 'Z') {
+                zEnd = Double.parseDouble(t.substring(1));
+                zCommand = true;
+            }
+        }
+
+        // New commands needed to replace original command
+        List<String> newCommands= new ArrayList<String>();
+
+        // Get info from state
+        Position curPos = state.currentPoint;
+        double xStart = curPos.x;
+        double yStart = curPos.y;
+        //double zStart = plane.axis1(start);
+
+        if (xCommand && xEnd != xStart) {
+            double newDir = (xEnd-xStart)/Math.abs(xEnd-xStart);
+            if (newDir < 0 && lastXMove > 0) {
+                adjustPlaneOffset("X", -1);
+                //newCommands.add(adjustPlaneOffset("X", -1));
+                //newCommands.addAll(compensateCommand("X", -1, xStart, yStart, latestCommand));
+            } else if (newDir > 0 && lastXMove < 0) {
+                adjustPlaneOffset("X", 1);
+                //newCommands.add(adjustPlaneOffset("X", 1));
+                //newCommands.addAll(compensateCommand("X", 1, xStart, yStart, latestCommand));
+            }
+        }
+        if (yCommand && yEnd != yStart) {
+            double newDir = (yEnd-yStart)/Math.abs(yEnd-yStart);
+            if (newDir < 0 && lastYMove > 0) {
+                adjustPlaneOffset("Y", -1);
+                //newCommands.add(adjustPlaneOffset("Y", -1));
+                //newCommands.addAll(compensateCommand("Y", -1, xStart, yStart, latestCommand));
+            } else if (newDir > 0 && lastYMove < 0) {
+                adjustPlaneOffset("Y", 1);
+                //newCommands.add(adjustPlaneOffset("Y", 1));
+                //newCommands.addAll(compensateCommand("Y", 1, xStart, yStart, latestCommand));
+            }
+        }
+
+        newCommands.add("G92 X" + xOffset + " Y" + yOffset);
+        newCommands.add(latestCommand + " X" + xStart + " Y" + yStart);
+        newCommands.add(command);
+
+        return newCommands;
     }
 
     private List<String> compensateArcQuadrants(String command, GcodeState state) throws GcodeParserException {
@@ -198,6 +245,37 @@ public class BacklashCompensationTest {
             // Used to make sure the first iteration of the loop starts at the arc start point instead of at a 90 degree interval
             boolean isFirstLoop = true;
 
+            // Make any pre-loop backlash adjustments
+            int quadrant = getQuadrantCCW(currAngle);
+            if (quadrant == 0) {
+                if (lastXMove != -1) {
+                    newCommands.addAll(compensateCommand("X", -1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != 1) {
+                    newCommands.addAll(compensateCommand("Y", 1, xStart, yStart, "G1"));
+                }
+            } else if (quadrant == 1) {
+                if (lastXMove != -1) {
+                    newCommands.addAll(compensateCommand("X", -1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != -1) {
+                    newCommands.addAll(compensateCommand("Y", -1, xStart, yStart, "G1"));
+                }
+            } else if (quadrant == 2) {
+                if (lastXMove != 1) {
+                    newCommands.addAll(compensateCommand("X", 1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != -1) {
+                    newCommands.addAll(compensateCommand("Y", -1, xStart, yStart, "G1"));
+                }
+            } else if (quadrant == 3) {
+                if (lastXMove != 1) {
+                    newCommands.addAll(compensateCommand("X", 1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != 1) {
+                    newCommands.addAll(compensateCommand("Y", 1, xStart, yStart, "G1"));
+                }
+            }
 
             // Continue to create new arc commands until arcs stop crossing X and Y axes
             while (endAngle > currAngle) {
@@ -219,7 +297,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on Y axis
-                        newCommands.addAll(compensateCommand("Y", -1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("Y", -1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = Math.PI / 2;
                     } else if (currQuadrant == 1) { // Crossing negative X axis -- Compensate X direction
@@ -237,7 +315,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on Y axis
-                        newCommands.addAll(compensateCommand("X", 1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("X", 1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = Math.PI;
                     } else if (currQuadrant == 2) { // Crossing negative Y axis -- Compensate Y direction
@@ -255,7 +333,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on Y axis
-                        newCommands.addAll(compensateCommand("Y", 1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("Y", 1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = Math.PI * 3 / 2;
                     } else { // Crossing positive X axis  -- Compensate X direction
@@ -273,7 +351,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on Y axis
-                        newCommands.addAll(compensateCommand("X", -1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("X", -1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = 0;
                     }
@@ -312,6 +390,37 @@ public class BacklashCompensationTest {
             // Used to make sure the first iteration of the loop starts at the arc start point instead of at a 90 degree interval
             boolean isFirstLoop = true;
 
+            // Make any pre-loop backlash adjustments
+            int quadrant = getQuadrantCW(currAngle);
+            if (quadrant == 0) {
+                if (lastXMove != 1) {
+                    newCommands.addAll(compensateCommand("X", 1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != -1) {
+                    newCommands.addAll(compensateCommand("Y", -1, xStart, yStart, "G1"));
+                }
+            } else if (quadrant == 1) {
+                if (lastXMove != 1) {
+                    newCommands.addAll(compensateCommand("X", 1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != 1) {
+                    newCommands.addAll(compensateCommand("Y", 1, xStart, yStart, "G1"));
+                }
+            } else if (quadrant == 2) {
+                if (lastXMove != -1) {
+                    newCommands.addAll(compensateCommand("X", -1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != 1) {
+                    newCommands.addAll(compensateCommand("Y", 1, xStart, yStart, "G1"));
+                }
+            } else if (quadrant == 3) {
+                if (lastXMove != -1) {
+                    newCommands.addAll(compensateCommand("X", -1, xStart, yStart, "G1"));
+                }
+                if (lastYMove != -1) {
+                    newCommands.addAll(compensateCommand("Y", -1, xStart, yStart, "G1"));
+                }
+            }
 
             // Continue to create new arc commands until arcs stop crossing X and Y axes
             while (currAngle > endAngle) {
@@ -333,7 +442,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on X axis
-                        newCommands.addAll(compensateCommand("X", -1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("X", -1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = Math.PI * 2;
                     } else if (currQuadrant == 3) { // Crossing negative Y axis -- Compensate Y direction
@@ -351,7 +460,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on Y axis
-                        newCommands.addAll(compensateCommand("Y", 1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("Y", 1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = Math.PI * 3 / 2;
                     } else if (currQuadrant == 2) { // Crossing negative X axis -- Compensate X direction
@@ -369,7 +478,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on X axis
-                        newCommands.addAll(compensateCommand("X", 1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("X", 1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = Math.PI;
                     } else { // Crossing positive Y axis  -- Compensate Y direction
@@ -387,7 +496,7 @@ public class BacklashCompensationTest {
                         // Add sliced arc
                         newCommands.add(tempCommand);
                         // Use G92 command to do global coordinate system offset to compensate for backlash on Y axis
-                        newCommands.addAll(compensateCommand("Y", -1, newPoint[0], newPoint[1]));
+                        newCommands.addAll(compensateCommand("Y", -1, newPoint[0], newPoint[1], "G1"));
                         // Set new currentAngle
                         currAngle = Math.PI / 2;
                     }
@@ -481,7 +590,7 @@ public class BacklashCompensationTest {
         return ret;
     }
 
-    private List<String> compensateCommand(String axis, int direction, double xEnd, double yEnd) {
+    private List<String> compensateCommand(String axis, int direction, double xEnd, double yEnd, String moveCommand) {
         if (axis.toUpperCase(Locale.ROOT).equals("X")) {
             if (lastXMove == -1 && direction == 1) {
                 lastXMove = 1;
@@ -503,10 +612,31 @@ public class BacklashCompensationTest {
         ArrayList<String> ret = new ArrayList<String>();
 
         ret.add("G92 X" + xOffset + " Y" + yOffset);
-        ret.add("G1 X" + xEnd + " Y" + yEnd);
+        ret.add(moveCommand + " X" + xEnd + " Y" + yEnd);
         // Need G1 command to move to offset end point (axes are shifted, but current position is now (-xComp) out of position
 
         return ret;
+    }
+
+    private String adjustPlaneOffset(String axis, int direction) {
+        if (axis.toUpperCase(Locale.ROOT).equals("X")) {
+            if (lastXMove == -1 && direction == 1) {
+                lastXMove = 1;
+                xOffset = xComp;
+            } else if (lastXMove == 1 && direction == -1) {
+                lastXMove = -1;
+                xOffset = 0;
+            }
+        } else if (axis.toUpperCase(Locale.ROOT).equals("Y")) {
+            if (lastYMove == -1 && direction == 1) {
+                lastYMove = 1;
+                yOffset = yComp;
+            } else if (lastYMove == 1 && direction == -1) {
+                lastYMove = -1;
+                yOffset = 0;
+            }
+        }
+        return "G92 X" + xOffset + " Y" + yOffset;
     }
 
 }

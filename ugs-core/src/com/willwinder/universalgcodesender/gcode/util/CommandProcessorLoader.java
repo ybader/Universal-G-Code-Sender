@@ -234,6 +234,8 @@ public class CommandProcessorLoader {
                 return new SpindleOnDweller(duration);
             case "LineSplitter":
                 return new LineSplitter(pc.args.get("segmentLengthMM").getAsDouble());
+            case "BacklashCompensation":
+                return new BacklashCompensation(pc.args.get("xComp").getAsDouble(), pc.args.get("yComp").getAsDouble());
             default:
                 throw new IllegalArgumentException("Unknown processor: " + pc.name);
         }

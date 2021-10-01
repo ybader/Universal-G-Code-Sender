@@ -60,6 +60,14 @@
                 "args": {
                     "commandLength":50
                 }
+            },{
+                "name": "BacklashCompensation",
+                "enabled": false,
+                "optional": true,
+                "args": {
+                    "xComp":0,
+                    "yComp":0
+                }
             }
         ]
     }
