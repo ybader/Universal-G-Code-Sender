@@ -1,6 +1,6 @@
 {
     "Name": "TinyG",
-    "Version": 5,
+    "Version": 6,
     "Controller": {
         "name": "TinyG",
         "args": null

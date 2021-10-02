@@ -1,6 +1,6 @@
 {
     "Name": "GRBL ESP32",
-    "Version": 5,
+    "Version": 6,
     "Controller": {
         "name": "GRBL ESP32",
         "args": null

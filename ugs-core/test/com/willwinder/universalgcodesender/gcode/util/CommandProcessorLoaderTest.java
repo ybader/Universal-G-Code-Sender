@@ -152,10 +152,18 @@ public class CommandProcessorLoaderTest {
         object.add("args", args);
         array.add(object);
 
+        args = new JsonObject();
+        args.addProperty("xComp", 0.3);
+        args.addProperty("yComp", 0.1);
+        object = new JsonObject();
+        object.addProperty("name", "BacklashCompensation");
+        object.add("args", args);
+        array.add(object);
+
         String jsonConfig = array.toString();
         List<CommandProcessor> processors = CommandProcessorLoader.initializeWithProcessors(jsonConfig);
 
-        assertEquals(10, processors.size());
+        assertEquals(11, processors.size());
         assertEquals(ArcExpander.class, processors.get(0).getClass());
         assertEquals(CommentProcessor.class, processors.get(1).getClass());
         assertEquals(DecimalProcessor.class, processors.get(2).getClass());
@@ -166,6 +174,7 @@ public class CommandProcessorLoaderTest {
         assertEquals(WhitespaceProcessor.class, processors.get(7).getClass());
         assertEquals(SpindleOnDweller.class, processors.get(8).getClass());
         assertEquals(LineSplitter.class, processors.get(9).getClass());
+        assertEquals(BacklashCompensation.class, processors.get(10).getClass());
     }
     
     private static JsonElement with(String name, Boolean enabled) {

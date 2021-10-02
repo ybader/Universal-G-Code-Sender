@@ -1,6 +1,6 @@
 {
     "Name": "Testing",
-    "Version": 5,
+    "Version": 6,
     "Controller": {
         "name": "Loopback",
         "args": null

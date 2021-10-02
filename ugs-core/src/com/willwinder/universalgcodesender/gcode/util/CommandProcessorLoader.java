@@ -50,6 +50,11 @@ public class CommandProcessorLoader {
      *         "optional": <optional>,
      *         "args": {}
      *     },{
+     *          "name": "BacklashCompensation",
+     *          "enabled": <enabled>,
+     *          "optional": <optional>,
+     *          "args": {}
+     *     },{
      *         "name": "CommentProcessor",
      *         "enabled": <enabled>,
      *         "optional": <optional>,
@@ -132,6 +137,14 @@ public class CommandProcessorLoader {
      *             "commandLength": <double>
      *         }
      *     },{
+     *          "name": "BacklashCompensation",
+     *          "enabled": <enabled>,
+     *          "optional": <optional>,
+     *          "args": {
+     *              "xComp": <double>,
+     *              "yComp": <double>
+     *           }
+     *     },{
      *         "name": "CommentProcessor",
      *         "enabled": <enabled>
      *         "optional": <optional>,
@@ -162,7 +175,7 @@ public class CommandProcessorLoader {
      *         "enabled": <enabled>,
      *         "optional": <optional>,
      *         "args": {
-     *             "duraion": <double>
+     *             "duration": <double>
      *         }
      *     },{
      *         "name":"LineSplitter",

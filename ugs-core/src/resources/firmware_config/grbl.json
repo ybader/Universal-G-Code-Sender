@@ -1,6 +1,6 @@
 {
     "Name": "GRBL",
-    "Version": 5,
+    "Version": 6,
     "Controller": {
         "name": "GRBL",
         "args": null
