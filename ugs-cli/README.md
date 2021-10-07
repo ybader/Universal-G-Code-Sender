@@ -39,7 +39,7 @@ Run the software with java -jar, then combine with these options:
  ## Example
  
 ```
-# java -jar ugs-cli-2.0-SNAPSHOT.jar --controller GRBL --port /dev/ttyUSB0 --baud 115200 --print-progressbar --file test.gcode
+# java -jar ugs-cli-2.0.8-SNAPSHOT.jar --controller GRBL --port /dev/ttyUSB0 --baud 115200 --print-progressbar --file test.gcode
 
 Connected to "Grbl 0.9z" on  baud 115200
 Running file "test.gcode"

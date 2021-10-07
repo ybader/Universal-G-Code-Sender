@@ -13,7 +13,7 @@ public class Version {
     private static final Logger LOGGER = Logger.getLogger(Version.class.getName());
     private static final String BUILD_DATE_FORMAT = "MMM dd, yyyy";
     private static final String BUILD_DATE_NUMBER_FORMAT = "yyyyMMdd";
-    private static String VERSION = "2.0-SNAPSHOT ";
+    private static String VERSION = "2.0.8-SNAPSHOT ";
     private static String BUILD_DATE = "";
 
     private static boolean initialized = false;

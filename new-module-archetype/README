@@ -5,7 +5,7 @@ To use navigate to `ugs-platform` directory and run:
 mvn archetype:generate                             \
   -DarchetypeGroupId=com.willwinder                \
   -DarchetypeArtifactId=ugs-plugin-archetype       \
-  -DarchetypeVersion=2.0-SNAPSHOT                  \
+  -DarchetypeVersion=2.0.8-SNAPSHOT                  \
   -DgroupId=com.willwinder <OrYourGroupId>         \
   -DartifactId=<YourModuleName>
 
