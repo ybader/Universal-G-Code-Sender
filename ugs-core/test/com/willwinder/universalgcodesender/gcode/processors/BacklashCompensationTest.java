@@ -84,7 +84,7 @@ public class BacklashCompensationTest {
 
         List<String> ret = processCommand(command, state);
         for (String t : ret) {
-            System.out.println(t);
+            //System.out.println(t);
         }
 
     }

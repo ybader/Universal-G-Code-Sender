@@ -482,6 +482,7 @@ public class BacklashCompensation implements CommandProcessor {
             }
         }
 
+        /*
         System.out.println("Center of Rotation: ["+xCOR+","+yCOR+"]");
         System.out.println("Start Point: ["+xStart+","+yStart+"]");
         System.out.println("End Point: ["+xEnd+","+yEnd+"]");
@@ -489,7 +490,7 @@ public class BacklashCompensation implements CommandProcessor {
         System.out.println("Radius: "+radius);
         System.out.println("Start Point Angle: "+startAngle);
         System.out.println("End Point Angle: "+endAngle);
-
+        */
         return newCommands;
     }
 
